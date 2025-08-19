@@ -6,15 +6,12 @@
     <PackageId>TenebrisReverie.KBUBComm</PackageId>
     <Authors>Caleb Hanson</Authors>
     <Company>Tenebris Reverie</Company>
+    <Version>1.1.0</Version>
     <RepositoryUrl>https://github.com/CalebHanson95/KBUB-s-COMMs</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/CalebHanson95/KBUB-s-COMMs</PackageProjectUrl>
   </PropertyGroup>
-  <PropertyGroup>
-    <Version>1.1.0</Version>
-    <Authors>Your Name</Authors>
-    <PackageId>MyCompany.Modbus</PackageId>
-  </PropertyGroup>
+ 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <Optimize>False</Optimize>
   </PropertyGroup>
