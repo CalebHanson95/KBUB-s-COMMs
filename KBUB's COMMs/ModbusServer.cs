@@ -38,7 +38,7 @@ namespace KBUBComm
 
         public void Listen()
         {
-
+             
             tcpListener.Start();
 
 
