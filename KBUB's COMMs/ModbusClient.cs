@@ -60,7 +60,7 @@ namespace KBUBComm
             _modbusMaster = null;
             isConnected = false;
         }
-        public Dictionary<int, T> ReadRegisters<T>(ushort startAddress, ushort valueCount, int port, bool isInput, out string errmsg)
+        public Dictionary<int, T> ReadRegisters<T>(ushort startAddress, ushort valueCount,  bool isInput, out string errmsg)
         where T : struct
         {
             errmsg = null;

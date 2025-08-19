@@ -1,8 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+ 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
-    <RootNamespace>KBUB_s_COMMs</RootNamespace>
+    <RootNamespace>KBUB_s_COMMs</RootNamespace> 
+    <PackageId>TenebrisReverie.KBUBComm</PackageId>
+    <Authors>Caleb Hanson</Authors>
+    <Company>Tenebris Reverie</Company>
+    <RepositoryUrl>https://github.com/CalebHanson95/KBUB-s-COMMs</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/CalebHanson95/KBUB-s-COMMs</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -22,6 +28,7 @@
     <PackageIcon>icon.png</PackageIcon>
     <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
+ 
   <ItemGroup>
     <None Remove="LICENSE.txt" />
   </ItemGroup>
