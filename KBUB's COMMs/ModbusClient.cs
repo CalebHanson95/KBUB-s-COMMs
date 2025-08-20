@@ -60,8 +60,7 @@ namespace KBUBComm
             _modbusMaster = null;
             isConnected = false;
         }
-        public Dictionary<int, T> ReadRegisters<T>(ushort startAddress, ushort valueCount,  bool isInput, out string errmsg)
-        where T : struct
+        public Dictionary<int, T> ReadRegisters<T>(ushort startAddress, ushort valueCount, bool isInput, out string errmsg) where T : struct
         {
             errmsg = null;
             var result = new Dictionary<int, T>();
@@ -74,39 +73,36 @@ namespace KBUBComm
 
             try
             {
-                // Determine how many registers per value (2 for float, 4 for double)
                 int registersPerValue = typeof(T) == typeof(float) ? 2 :
                                         typeof(T) == typeof(double) ? 4 :
                                         throw new NotSupportedException($"Type {typeof(T)} not supported");
 
                 ushort numRegisters = (ushort)(valueCount * registersPerValue);
-
                 ushort[] registers = isInput
                     ? _modbusMaster.ReadInputRegisters(startAddress, numRegisters)
                     : _modbusMaster.ReadHoldingRegisters(startAddress, numRegisters);
 
                 for (int i = 0; i < valueCount; i++)
                 {
-                    // Grab the slice of registers for this value
                     ushort[] slice = registers.Skip(i * registersPerValue).Take(registersPerValue).ToArray();
-
                     T value = default;
+
                     if (typeof(T) == typeof(float))
                     {
-                        // 2 registers -> float
-                        ushort low = slice[0];
-                        ushort high = slice[1];
-                        int binary = (high << 16) | low;
-                        value = (T)(object)BitConverter.ToSingle(BitConverter.GetBytes(binary), 0);
+                        byte[] bytes = new byte[4];
+                        bytes[0] = (byte)(slice[1] >> 8);   // high byte of high register
+                        bytes[1] = (byte)(slice[1] & 0xFF); // low byte of high register
+                        bytes[2] = (byte)(slice[0] >> 8);   // high byte of low register
+                        bytes[3] = (byte)(slice[0] & 0xFF); // low byte of low register
+                        value = (T)(object)BitConverter.ToSingle(bytes, 0);
                     }
                     else if (typeof(T) == typeof(double))
                     {
-                        // 4 registers -> double
                         byte[] bytes = new byte[8];
                         for (int j = 0; j < 4; j++)
                         {
-                            bytes[j * 2 + 0] = (byte)(slice[j] & 0xFF);      // low byte
-                            bytes[j * 2 + 1] = (byte)(slice[j] >> 8);        // high byte
+                            bytes[j * 2 + 0] = (byte)(slice[j] >> 8);   // high byte
+                            bytes[j * 2 + 1] = (byte)(slice[j] & 0xFF); // low byte
                         }
                         value = (T)(object)BitConverter.ToDouble(bytes, 0);
                     }
@@ -121,6 +117,7 @@ namespace KBUBComm
 
             return result;
         }
+
 
     }
 }
