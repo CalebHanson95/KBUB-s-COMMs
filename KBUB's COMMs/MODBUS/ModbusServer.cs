@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Modbus.Device;
 using Modbus.Data;
 using Modbus.Utility;
-namespace KBUBComm
+namespace KBUBComm.MODBUS
 {
     public class ModbusServer
     {

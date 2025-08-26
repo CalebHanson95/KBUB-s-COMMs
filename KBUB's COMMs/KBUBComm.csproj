@@ -2,11 +2,11 @@
  
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
-    <RootNamespace>KBUB_s_COMMs</RootNamespace> 
+    <RootNamespace>KBUBComm</RootNamespace> 
     <PackageId>TenebrisReverie.KBUBComm</PackageId>
     <Authors>Caleb Hanson</Authors>
     <Company>Tenebris Reverie</Company>
-    <Version>1.2.2</Version>
+    <Version>1.3.1</Version>
     <RepositoryUrl>https://github.com/CalebHanson95/KBUB-s-COMMs</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/CalebHanson95/KBUB-s-COMMs</PackageProjectUrl>
@@ -15,7 +15,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <Optimize>False</Optimize>
   </PropertyGroup>
-
+  <PropertyGroup>
+    <IncludeSymbols>false</IncludeSymbols>
+    <DebugType>none</DebugType>
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <Optimize>True</Optimize>
   </PropertyGroup>
@@ -45,7 +49,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="dnp3" Version="1.6.0" />
     <PackageReference Include="NModbus4" Version="2.1.0" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.376.244" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Server" Version="1.5.376.244" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE.txt" Pack="true" PackagePath="" />
