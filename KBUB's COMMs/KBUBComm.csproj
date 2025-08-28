@@ -6,7 +6,7 @@
     <PackageId>TenebrisReverie.KBUBComm</PackageId>
     <Authors>Caleb Hanson</Authors>
     <Company>Tenebris Reverie</Company>
-    <Version>1.3.1</Version>
+    <Version>1.4.3</Version>
     <RepositoryUrl>https://github.com/CalebHanson95/KBUB-s-COMMs</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/CalebHanson95/KBUB-s-COMMs</PackageProjectUrl>
@@ -32,6 +32,7 @@
   <PropertyGroup>
     <PackageIcon>icon.png</PackageIcon>
     <ApplicationIcon>icon.ico</ApplicationIcon>
+     <Description>Extensions to popular open source libraries and other utility features commonly used in applications I have designed. While it is open license, it is mostly for personal use and will not be updated per user request, and is provided 'as is'.</Description>
   </PropertyGroup>
  
   <ItemGroup>

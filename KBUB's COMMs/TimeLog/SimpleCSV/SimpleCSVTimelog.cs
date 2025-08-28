@@ -93,7 +93,7 @@ namespace KBUBComm.TimeLog.SimpleCSV
             }
         }
 
-        public void AddRow(IEnumerable<object> values)
+        public void AddRow<T>(IEnumerable<T> values)
         {
             lock (_fileLock)
             {
@@ -118,7 +118,7 @@ namespace KBUBComm.TimeLog.SimpleCSV
             }
         }
 
-        private void AppendRow(string path, IEnumerable<object> values)
+        private void AppendRow<T>(string path, IEnumerable<T> values)
         {
             using (var writer = new StreamWriter(path, true, Encoding.UTF8))
             {
@@ -129,7 +129,7 @@ namespace KBUBComm.TimeLog.SimpleCSV
             _currentRowCount++;
         }
 
-        private void HandleRollover(IEnumerable<object> values)
+        private void HandleRollover<T>(IEnumerable<T> values)
         {
             if (_currentRowCount < _rolloverCount)
             {
@@ -147,7 +147,7 @@ namespace KBUBComm.TimeLog.SimpleCSV
             AppendRow(_filePath, values);
         }
 
-        private void HandleSpillover(IEnumerable<object> values, bool limited)
+        private void HandleSpillover<T>(IEnumerable<T> values, bool limited)
         {
             if (_currentRowCount < _rolloverCount)
             {

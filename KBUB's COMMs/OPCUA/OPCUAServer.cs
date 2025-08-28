@@ -11,7 +11,7 @@ using System.Diagnostics;
 using System.Reflection.Emit;
 using System.Security.AccessControl;
 
-namespace KBUB_s_COMMs.OPCUA
+namespace KBUBComm.OPCUA
 {
     public class OPCUAServer : StandardServer
     {
@@ -21,16 +21,23 @@ namespace KBUB_s_COMMs.OPCUA
         internal KBUBNodeManager nodeMgr;
         ApplicationInstance app;
         public Dictionary<string, NodeId> addedNodes = new Dictionary<string, NodeId>();
+
+        string rootPointsFolderName = "KBUB Points";
+        string nodeManagerURI = "http://kbubcomm/opcua/";
+        List<Tuple<string, string>> subfoldersToCreate = null;
+
         protected override MasterNodeManager CreateMasterNodeManager(IServerInternal server, ApplicationConfiguration configuration)
         {
             log.WriteEntry("Creating Master Node");
-            nodeMgr = new KBUBNodeManager(server, config, "http://kbubcomm/opcua/", "KBUB Points", log);
+            nodeMgr = new KBUBNodeManager(server, config, nodeManagerURI, rootPointsFolderName, log, subfoldersToCreate);
             var nodeManagers = new INodeManager[] { nodeMgr };
 
             return new MasterNodeManager(server, configuration, null, nodeManagers);
         }
 
-        public async Task InitializeServer(int port, string appURI, EventLog log, string name = "KBUBComm OPCUA Server")
+
+
+        public async Task InitializeServer(int port, string appURI, EventLog log, string name = "KBUBComm OPCUA Server", string rootPointsFolderName= "KBUB Points", string nodeManagerURI = "http://kbubcomm/opcua/",  List<Tuple<string,string>> subfoldersToCreate = null)
         {
             this.log = log;
 
@@ -38,6 +45,9 @@ namespace KBUB_s_COMMs.OPCUA
             var ownStore = Path.Combine(basePkiPath, "own");
             var trustedStore = Path.Combine(basePkiPath, "trusted");
             var rejectedStore = Path.Combine(basePkiPath, "rejected");
+            this.subfoldersToCreate = subfoldersToCreate;
+            this.nodeManagerURI = nodeManagerURI;
+            this.rootPointsFolderName = rootPointsFolderName;
 
             Directory.CreateDirectory(ownStore);
             Directory.CreateDirectory(trustedStore);
@@ -196,13 +206,16 @@ namespace KBUB_s_COMMs.OPCUA
     {
         private EventLog log;
         private string _pointsFolderName;
+        List<Tuple<string, string>> subfoldersToCreate = null;
+        // Keeps track of all created folders
+        private Dictionary<string, FolderState> _folders = new Dictionary<string, FolderState>(StringComparer.OrdinalIgnoreCase);
 
         public FolderState PointsFolder { get; private set; }
 
         // Dictionary for easy access to points by NodeId
         private readonly Dictionary<NodeId, BaseDataVariableState> _points = new Dictionary<NodeId, BaseDataVariableState>();
 
-        public KBUBNodeManager(IServerInternal server, ApplicationConfiguration config, string namespaceUri, string pointsFolderName, EventLog log)
+        public KBUBNodeManager(IServerInternal server, ApplicationConfiguration config, string namespaceUri, string pointsFolderName, EventLog log, List<Tuple<string, string>> subfoldersToCreate )
             : base(server, config)
         {
             this.log = log;
@@ -213,7 +226,7 @@ namespace KBUB_s_COMMs.OPCUA
             namespaceUris[1] = namespaceUri + "/Instance";
             SetNamespaces(namespaceUris);
 
-            log.WriteEntry($"KBUBNodeManager initialized with namespace '{namespaceUri}' and points folder '{pointsFolderName}'.");
+            log.WriteEntry($"Node Manager initialized with namespace '{namespaceUri}' and points folder '{pointsFolderName}'.");
         }
 
         protected override NodeStateCollection LoadPredefinedNodes(ISystemContext context)
@@ -254,13 +267,66 @@ namespace KBUB_s_COMMs.OPCUA
 
                 log.WriteEntry("Adding points folder as predefined node");
                 AddPredefinedNode(SystemContext, PointsFolder);
+
+                if (subfoldersToCreate != null && subfoldersToCreate.Count > 0)
+                {
+
+                    _folders = new Dictionary<string, FolderState>(StringComparer.OrdinalIgnoreCase)
+            {
+                { _pointsFolderName, PointsFolder }
+            };
+
+                    foreach (var (parentName, childName) in subfoldersToCreate)
+                    {
+                        try
+                        {
+                            var parentKey = string.IsNullOrEmpty(parentName) ? _pointsFolderName : parentName;
+
+                            if (!_folders.TryGetValue(parentKey, out var parentFolder))
+                            {
+                                log.WriteEntry($"Parent folder '{parentKey}' not found. Skipping child '{childName}'.");
+                                continue;
+                            }
+
+                            var newFolder = new FolderState(parentFolder)
+                            {
+                                NodeId = new NodeId(childName.Replace(" ", "_"), NamespaceIndex),
+                                BrowseName = new QualifiedName(childName.Replace(" ", "_"), NamespaceIndex),
+                                SymbolicName = childName,
+                                DisplayName = childName,
+                                TypeDefinitionId = ObjectTypeIds.FolderType
+                            };
+
+                            newFolder.AddReference(ReferenceTypeIds.Organizes, true, parentFolder.NodeId);
+                            parentFolder.AddReference(ReferenceTypeIds.Organizes, false, newFolder.NodeId);
+
+                            newFolder.EventNotifier = EventNotifiers.SubscribeToEvents;
+                            AddPredefinedNode(SystemContext, newFolder);
+
+                            _folders[childName] = newFolder;
+
+
+                            log.WriteEntry($"Created subfolder '{childName}' under '{parentKey}'.");
+                        }
+                        catch (Exception ex)
+                        {
+                            log.WriteEntry($"Error creating subfolder '{childName}': {ex}");
+                        }
+                    }
+                }
             }
         }
 
         /// <summary>
         /// Creates a point in the points folder with a specified type.
         /// </summary>
-        public BaseDataVariableState CreatePoint(string pointName, NodeId nodeId = null, NodeId dataType = null, bool canWrite = false, object initialValue = null)
+        public BaseDataVariableState CreatePoint(
+      string pointName,
+      NodeId nodeId = null,
+      NodeId dataType = null,
+      bool canWrite = false,
+      object initialValue = null,
+      string subFolder = null)
         {
             lock (Lock)
             {
@@ -270,7 +336,19 @@ namespace KBUB_s_COMMs.OPCUA
                 if (dataType == null)
                     dataType = DataTypeIds.Double;
 
-                var point = new BaseDataVariableState(PointsFolder)
+                FolderState parentFolder;
+
+                if (string.IsNullOrEmpty(subFolder))
+                {
+                    parentFolder = PointsFolder;
+                }
+                else if (!_folders.TryGetValue(subFolder, out parentFolder))
+                {
+                    log.WriteEntry($"ERROR: Subfolder '{subFolder}' not found. Skipping point '{pointName}'.");
+                    return null;
+                }
+
+                var point = new BaseDataVariableState(parentFolder)
                 {
                     NodeId = nodeId,
                     BrowseName = new QualifiedName(pointName.Replace(" ", "_"), NamespaceIndex),
@@ -282,15 +360,18 @@ namespace KBUB_s_COMMs.OPCUA
                     AccessLevel = AccessLevels.CurrentReadOrWrite
                 };
 
-                PointsFolder.AddChild(point);
+                parentFolder.AddChild(point);
                 AddPredefinedNode(SystemContext, point);
                 _points[nodeId] = point;
 
-                log.WriteEntry($"Created point '{pointName}' with NodeId '{nodeId}' and DataType '{dataType}'.");
+                log.WriteEntry(
+                    $"Created point '{pointName}' in folder '{parentFolder.DisplayName}' with NodeId '{nodeId}' and DataType '{dataType}'.");
 
                 return point;
             }
         }
+
+
 
         /// <summary>
         /// Write value to an existing point

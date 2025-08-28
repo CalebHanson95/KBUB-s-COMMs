@@ -14,7 +14,7 @@ namespace KBUBComm.OPCUA
         private readonly Dictionary<string, NodeId> pointCache = new Dictionary<string, NodeId>();
         public bool IsConnected => session?.Connected ?? false;
 
-        public async Task<bool> ConnectAsync(string address, int port, string name = "KBUBComm OPCUA Client")
+        public async Task<bool> ConnectAsync(string address, int port, string name = "KBUBComm OPCUA Client", string sessionName = "KBUBCommSession")
         {
             try
             {
@@ -48,7 +48,7 @@ namespace KBUBComm.OPCUA
                     config,
                     new ConfiguredEndpoint(null, selectedEndpoint, EndpointConfiguration.Create(config)),
                     updateBeforeConnect: false,
-                    sessionName: "KBUBCommSession",
+                    sessionName: sessionName,
                     sessionTimeout: 60000,
                     identity: null,          // anonymous
                     preferredLocales: null);
