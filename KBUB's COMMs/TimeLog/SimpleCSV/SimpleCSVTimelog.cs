@@ -74,14 +74,25 @@ namespace KBUBComm.TimeLog.SimpleCSV
 
         private void InitializeFile()
         {
-            if (!File.Exists(_filePath))
+            if (!File.Exists(_filePath) || new FileInfo(_filePath).Length == 0)
             {
+                // Either file doesn't exist or it is empty → write header
                 WriteHeaders(_filePath);
                 _currentRowCount = 0;
             }
             else
             {
-                _currentRowCount = File.ReadLines(_filePath).Count() - 1; // minus header
+                // File exists → count rows minus header
+                var lines = File.ReadAllLines(_filePath);
+                if (lines.Length == 0)
+                {
+                    WriteHeaders(_filePath);
+                    _currentRowCount = 0;
+                }
+                else
+                {
+                    _currentRowCount = lines.Length - 1;
+                }
             }
         }
 
