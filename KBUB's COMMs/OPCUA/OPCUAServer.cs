@@ -143,7 +143,7 @@ namespace KBUBComm.OPCUA
         {
 
             var bdvs = nodeMgr.CreatePoint(pointName, nodeID, dataType, canWrite == CanWrite.ReadWrite, initialValue, subFolder);
-            addedNodes.Add(pointName, bdvs.NodeId);
+            addedNodes.Add((subFolder==null? rootPointsFolderName : subFolder) + pointName, bdvs.NodeId);
             return bdvs;
 
         }
@@ -241,10 +241,7 @@ namespace KBUBComm.OPCUA
                 log.WriteEntry("Trying to create address space");
                 base.CreateAddressSpace(externalReferences);
 
-                log.WriteEntry("Getting references");
-                IList<IReference> references = null;
-
-                if (!externalReferences.TryGetValue(ObjectIds.ObjectsFolder, out references))
+                if (!externalReferences.TryGetValue(ObjectIds.ObjectsFolder, out var references))
                 {
                     externalReferences[ObjectIds.ObjectsFolder] = references = new List<IReference>();
                 }
@@ -267,10 +264,11 @@ namespace KBUBComm.OPCUA
 
                 log.WriteEntry("Adding points folder as predefined node");
                 AddPredefinedNode(SystemContext, PointsFolder);
-                log.WriteEntry("Moving onto subfolders " + (subfoldersToCreate == null ? "(None found)" : "(" + (subfoldersToCreate.Count + " subfolders found!)")));
+
+                log.WriteEntry("Moving onto subfolders " + (subfoldersToCreate == null ? "(None found)" : $"({subfoldersToCreate.Count} subfolders found!)"));
+
                 if (subfoldersToCreate != null && subfoldersToCreate.Count > 0)
                 {
-
                     _folders = new Dictionary<string, FolderState>(StringComparer.OrdinalIgnoreCase)
             {
                 { _pointsFolderName, PointsFolder }
@@ -278,20 +276,26 @@ namespace KBUBComm.OPCUA
 
                     foreach (var (parentName, childName) in subfoldersToCreate)
                     {
-                     
                         try
                         {
-                            var parentKey = string.IsNullOrEmpty(parentName) ? _pointsFolderName : parentName;
-                            log.WriteEntry("Creating Subfolder " + childName + " in the " + parentKey + " folder.");
+                            var parentKey = string.IsNullOrEmpty(parentName)
+                                ? _pointsFolderName
+                                : parentName;
+
                             if (!_folders.TryGetValue(parentKey, out var parentFolder))
                             {
                                 log.WriteEntry($"Parent folder '{parentKey}' not found. Skipping child '{childName}'.");
                                 continue;
                             }
-                        
+
+                            // Build full key for child
+                            var childKey = $"{parentKey}/{childName}";
+
+                            log.WriteEntry($"Creating Subfolder '{childName}' under '{parentKey}' (key: {childKey}).");
+
                             var newFolder = new FolderState(parentFolder)
                             {
-                                NodeId = new NodeId(childName.Replace(" ", "_"), NamespaceIndex),
+                                NodeId = new NodeId(childKey.Replace(" ", "_"), NamespaceIndex),
                                 BrowseName = new QualifiedName(childName.Replace(" ", "_"), NamespaceIndex),
                                 SymbolicName = childName,
                                 DisplayName = childName,
@@ -300,14 +304,12 @@ namespace KBUBComm.OPCUA
 
                             newFolder.AddReference(ReferenceTypeIds.Organizes, true, parentFolder.NodeId);
                             parentFolder.AddReference(ReferenceTypeIds.Organizes, false, newFolder.NodeId);
-                            references.Add(new NodeStateReference(ReferenceTypeIds.Organizes, false, parentFolder.NodeId));
-                            AddRootNotifier(newFolder);
+                             AddRootNotifier(newFolder);
 
                             newFolder.EventNotifier = EventNotifiers.SubscribeToEvents;
                             AddPredefinedNode(SystemContext, newFolder);
 
-                            _folders[childName] = newFolder;
-
+                            _folders[childKey] = newFolder;
 
                             log.WriteEntry($"Created subfolder '{childName}' under '{parentKey}'.");
                         }
@@ -324,12 +326,12 @@ namespace KBUBComm.OPCUA
         /// Creates a point in the points folder with a specified type.
         /// </summary>
         public BaseDataVariableState CreatePoint(
-      string pointName,
-      NodeId nodeId = null,
-      NodeId dataType = null,
-      bool canWrite = false,
-      object initialValue = null,
-      string subFolder = null)
+            string pointName,
+            NodeId nodeId = null,
+            NodeId dataType = null,
+            bool canWrite = false,
+            object initialValue = null,
+            string subFolder = null)
         {
             lock (Lock)
             {
@@ -386,6 +388,9 @@ namespace KBUBComm.OPCUA
                 if (_points.TryGetValue(nodeId, out var point))
                 {
                     point.Value = value;
+                    point.Timestamp = DateTime.UtcNow;
+                    point.StatusCode = StatusCodes.Good;
+                    point.ClearChangeMasks(SystemContext, false);
                    // log.WriteEntry($"Wrote value '{value}' to point '{point.DisplayName}'.");
                 }
                 else
