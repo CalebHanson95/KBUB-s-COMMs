@@ -1,0 +1,63 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+ 
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>KBUBComm</RootNamespace> 
+    <PackageId>TenebrisReverie.KBUBComm</PackageId>
+    <Authors>Caleb Hanson</Authors>
+    <Company>Tenebris Reverie</Company>
+    <Version>1.4.12</Version>
+    <RepositoryUrl>https://github.com/CalebHanson95/KBUB-s-COMMs</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/CalebHanson95/KBUB-s-COMMs</PackageProjectUrl>
+  </PropertyGroup>
+ 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>False</Optimize>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IncludeSymbols>false</IncludeSymbols>
+    <DebugType>none</DebugType>
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageIcon>icon.png</PackageIcon>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+     <Description>Extensions to popular open source libraries and other utility features commonly used in applications I have designed. While it is open license, it is mostly for personal use and will not be updated per user request, and is provided 'as is'.</Description>
+  </PropertyGroup>
+ 
+  <ItemGroup>
+    <None Remove="LICENSE.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="LICENSE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="icon.png" Pack="true" PackagePath="">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="dnp3" Version="1.6.0" />
+    <PackageReference Include="NModbus4" Version="2.1.0" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.376.244" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Server" Version="1.5.376.244" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LICENSE.txt" Pack="true" PackagePath="" />
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="icon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+</Project>
