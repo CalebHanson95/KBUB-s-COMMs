@@ -6,4 +6,4 @@ you are free to use it if it happens to fit your needs.
 
 ## Installation
 ```powershell
-dotnet add package MyCompany.Modbus
+dotnet add package  MyCompany.Modbus
